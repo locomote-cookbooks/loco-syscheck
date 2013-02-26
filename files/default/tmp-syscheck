@@ -1,0 +1,27 @@
+#!/usr/bin/env syscheck
+
+check_system
+
+describe 'unicorn'
+  its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=2}
+  its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=8}
+end_describe
+
+describe 'nginx'
+  its_process_count 'nginx: master process' ${NGINX_MASTER_PROCESS_COUNT:=1}
+  its_process_count 'nginx: worker process' ${NGINX_WORKER_PROCESS_COUNT:=4}
+end_describe
+
+describe 'resque'
+  its_process_count 'resque' ${RESQUE_PROCESS_COUNT:=2}
+end_describe
+
+describe 'postfix'
+  its_process_count 'postfix/master' ${POSTFIX_PROCESS_COUNT:=1}
+
+  it "should have the correct hostname in the (chef generated) postfix config file"
+    myhostname=`grep ^myhostname /etc/postfix/main.cf | sed 's/^myhostname = //'`
+    fqdn=`hostname --fqdn`
+    run echo "=> myhostname: $myhostname (fqdn: $fqdn)"
+    assert equal $myhostname $fqdn
+end_describe
