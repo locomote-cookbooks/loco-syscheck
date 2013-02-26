@@ -1,3 +1,4 @@
+name             'loco-syschecks'
 maintainer       'Locomote'
 maintainer_email 'devs@locomote.com'
 license          'BSD'
