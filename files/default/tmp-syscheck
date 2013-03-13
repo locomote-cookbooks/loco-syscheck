@@ -19,9 +19,11 @@ end_describe
 describe 'postfix'
   its_process_count 'postfix/master' ${POSTFIX_PROCESS_COUNT:=1}
 
-  it "should have the correct hostname in the (chef generated) postfix config file"
-    myhostname=`grep ^myhostname /etc/postfix/main.cf | sed 's/^myhostname = //'`
-    fqdn=`hostname --fqdn`
-    run echo "=> myhostname: $myhostname (fqdn: $fqdn)"
-    assert equal $myhostname $fqdn
+  if [ $(hostname) != "tmp-systest" ]; then
+    it "should have the correct hostname in the (chef generated) postfix config file"
+      myhostname=`grep ^myhostname /etc/postfix/main.cf | sed 's/^myhostname = //'`
+      fqdn=`hostname --fqdn`
+      run echo "=> myhostname: $myhostname (fqdn: $fqdn)"
+      assert equal $myhostname $fqdn
+  fi
 end_describe
