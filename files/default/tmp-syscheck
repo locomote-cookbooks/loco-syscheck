@@ -9,7 +9,7 @@ end_describe
 
 describe 'nginx'
   its_process_count 'nginx: master process' ${NGINX_MASTER_PROCESS_COUNT:=1}
-  its_process_count 'nginx: worker process' ${NGINX_WORKER_PROCESS_COUNT:=4}
+  its_process_count 'nginx: worker process' ${NGINX_WORKER_PROCESS_COUNT:=$(cmd_for number_of_cores)}
 end_describe
 
 describe 'resque'
