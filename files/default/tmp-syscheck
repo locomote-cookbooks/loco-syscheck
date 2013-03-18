@@ -2,20 +2,18 @@
 
 check_system
 
-check_unsent_emails() {
+check_failed_emails() {
   MAIL_LOGFILE=${MAIL_LOGFILE:-/var/log/maillog}
   local emails_sent=$(sudo grep status=sent $MAIL_LOGFILE | sed 's/.* to=<//g' | sed 's/>,.*//g' | sort -u)
-  local emails_not_sent=$(sudo grep status= $MAIL_LOGFILE | grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' | grep -v root | grep -v localhost | grep -v locomotetmp)
+  local emails_failed=$(sudo grep status= $MAIL_LOGFILE | grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' | grep -v root | grep -v localhost | grep -v locomotetmp)
 
-  run echo "$(echo "$emails_sent" | wc -l | tr -d ' ') emails sent to : $(echo "$emails_sent" | sort -u | xargs)"
-  if [ -e "$emails_not_sent" ]; then
-    local number_of_unsent_emails=$(echo "$emails_not_sent" | wc -l | tr -d ' ')
-    run echo "$number_of_unsent_emails emails not sent to : [$(echo "$emails_not_sent" | sort -u | xargs)]"
-  else
-    local number_of_unsent_emails=0
-  fi
+  local number_of_sent_emails=$(  [  "$emails_sent"   ] && (echo "$emails_sent" | wc -l | tr -d ' ') || echo 0)
+  local number_of_failed_emails=$([  "$emails_failed" ] && (echo "$emails_failed" | wc -l | tr -d ' ') || echo 0)
 
-  assert equal $number_of_unsent_emails 0
+  run echo "$number_of_sent_emails email(s) sent to : $(    echo "$emails_sent"     | sort -u | xargs)"
+  run echo "$number_of_failed_emails email(s) failed to send to : $(echo "$emails_failed" | sort -u | xargs)"
+
+  assert equal $number_of_failed_emails 0
 }
 
 describe 'unicorn'
@@ -43,7 +41,7 @@ describe 'postfix'
       assert equal $myhostname $fqdn
   fi
 
-  it 'should not have any unsent emails'
-    check_unsent_emails
+  it 'should not have any failed emails'
+    check_failed_emails
 
 end_describe
