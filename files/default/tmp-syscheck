@@ -2,6 +2,22 @@
 
 check_system
 
+check_unsent_emails() {
+  MAIL_LOGFILE=${MAIL_LOGFILE:-/var/log/maillog}
+  local emails_sent=$(sudo grep status=sent $MAIL_LOGFILE | sed 's/.* to=<//g' | sed 's/>,.*//g' | sort -u)
+  local emails_not_sent=$(sudo grep status= $MAIL_LOGFILE | grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' | grep -v root | grep -v localhost | grep -v locomotetmp)
+
+  run echo "$(echo "$emails_sent" | wc -l | tr -d ' ') emails sent to : $(echo "$emails_sent" | sort -u | xargs)"
+  if [ -e "$emails_not_sent" ]; then
+    local number_of_unsent_emails=$(echo "$emails_not_sent" | wc -l | tr -d ' ')
+    run echo "$number_of_unsent_emails emails not sent to : [$(echo "$emails_not_sent" | sort -u | xargs)]"
+  else
+    local number_of_unsent_emails=0
+  fi
+
+  assert equal $number_of_unsent_emails 0
+}
+
 describe 'unicorn'
   its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=2}
   its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=8}
@@ -26,4 +42,8 @@ describe 'postfix'
       run echo "=> myhostname: $myhostname (fqdn: $fqdn)"
       assert equal $myhostname $fqdn
   fi
+
+  it 'should not have any unsent emails'
+    check_unsent_emails
+
 end_describe
