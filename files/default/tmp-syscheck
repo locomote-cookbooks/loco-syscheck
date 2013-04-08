@@ -20,6 +20,10 @@ not_on_systest() {
   [ $(hostname) != "tmp-systest" ]
 }
 
+describe 'god'
+  its_process_count 'god' 1
+end_describe
+
 describe 'unicorn'
   its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=2}
   its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=8}
