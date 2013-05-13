@@ -2,7 +2,7 @@
 
 check_system
 
-failed_email_blacklist="@ssdf.com"
+failed_email_blacklist="@ssdf.com|siege@locomote.com.au"
 
 check_failed_emails() {
   MAIL_LOGFILE=${MAIL_LOGFILE:-/var/log/maillog}
@@ -11,7 +11,7 @@ check_failed_emails() {
     sudo grep status= $MAIL_LOGFILE |
     grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' |
     grep -v root | grep -v localhost | grep -v locomotetmp |
-    grep -v $failed_email_blacklist
+    grep -v -E $failed_email_blacklist
   )
 
   local number_of_sent_emails=$(  [  "$emails_sent"   ] && (echo "$emails_sent" | wc -l | tr -d ' ') || echo 0)
