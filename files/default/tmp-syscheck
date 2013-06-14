@@ -27,40 +27,77 @@ not_on_systest() {
   [ $(hostname) != "tmp-systest" ]
 }
 
-describe 'god'
-  its_process_count 'god' 1
-end_describe
+unicorn_pids() {
+  pgrep -f unicorn
+}
 
-describe 'unicorn'
-  its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=2}
-  its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=8}
-end_describe
+check_unicorns_are_using_correct_ruby_version() { local ruby_version=$1
+  it "unicorn should use $ruby_version"
+    for p in $(unicorn_pids); do
+      assert present $(ls -l /proc/$p/exe | grep $ruby_version)
+    done
+}
 
-describe 'nginx'
-  its_process_count 'nginx: master process' ${NGINX_MASTER_PROCESS_COUNT:=1}
-  its_process_count 'nginx: worker process' ${NGINX_WORKER_PROCESS_COUNT:=$(cmd_for number_of_cores)}
-end_describe
+#########
 
-describe 'redis'
-  its_process_count 'redis-server' ${REDIS_PROCESS_COUNT:=1}
-end_describe
+check_god() {
+  describe 'god'
+    its_process_count 'god' 1
+  end_describe
+}
 
-describe 'resque'
-  its_process_count 'resque' ${RESQUE_PROCESS_COUNT:=2}
-end_describe
+check_unicorn() {
+  describe 'unicorn'
+    its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=2}
+    its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=8}
+    check_unicorns_are_using_correct_ruby_version ${RUBY_VERSION:-ruby-2.0.0-p195}
+  end_describe
+}
 
-describe 'postfix'
-  its_process_count 'postfix/master' ${POSTFIX_PROCESS_COUNT:=1}
+check_nginx() {
+  describe 'nginx'
+    its_process_count 'nginx: master process' ${NGINX_MASTER_PROCESS_COUNT:=1}
+    its_process_count 'nginx: worker process' ${NGINX_WORKER_PROCESS_COUNT:=$(cmd_for number_of_cores)}
+  end_describe
+}
 
-  if not_on_systest; then
-    it "should have the correct hostname in the (chef generated) postfix config file"
-      myhostname=`grep ^myhostname /etc/postfix/main.cf | sed 's/^myhostname = //'`
-      fqdn=`hostname --fqdn`
-      run echo "=> myhostname: $myhostname (fqdn: $fqdn)"
-      assert equal $myhostname $fqdn
+check_redis() {
+  describe 'redis'
+    its_process_count 'redis-server' ${REDIS_PROCESS_COUNT:=1}
+  end_describe
+}
 
-    it 'should not have any failed emails'
-      check_failed_emails
-  fi
+check_resque() {
+  describe 'resque'
+    its_process_count 'resque' ${RESQUE_PROCESS_COUNT:=2}
+  end_describe
+}
 
-end_describe
+check_postfix() {
+  describe 'postfix'
+    its_process_count 'postfix/master' ${POSTFIX_PROCESS_COUNT:=1}
+
+    if not_on_systest; then
+      it "should have the correct hostname in the (chef generated) postfix config file"
+        myhostname=`grep ^myhostname /etc/postfix/main.cf | sed 's/^myhostname = //'`
+        fqdn=`hostname --fqdn`
+        run echo "=> myhostname: $myhostname (fqdn: $fqdn)"
+        assert equal $myhostname $fqdn
+
+      it 'should not have any failed emails'
+        check_failed_emails
+    fi
+
+  end_describe
+}
+
+
+DEFAULT_TMP_CHECKS="god unicorn nginx redis resque postfix"
+check_tmp() {
+  for c in $@; do
+    func="check_${c}"
+    type $func 2> /dev/null | grep -q 'function' && $func
+  done
+}
+
+check_tmp ${TMP_CHECKS:-$DEFAULT_TMP_CHECKS}
