@@ -2,7 +2,7 @@
 
 check_system
 
-failed_email_blacklist="@ssdf.com|siege@locomote.com.au|authoriserdave@locomote.com.au|molly14@locomote.com.au|test@locomote.com.au"
+failed_email_blacklist="@ssdf.com|siege@locomote.com.au|authoriserdave@locomote.com.au|molly14@locomote.com.au|test@locomote.com.au|david-austravel@locomote.com.au"
 
 check_failed_emails() {
   MAIL_LOGFILE=${MAIL_LOGFILE:-/var/log/maillog}
