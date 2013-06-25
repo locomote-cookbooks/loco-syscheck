@@ -27,19 +27,8 @@ not_on_systest() {
   [ $(hostname) != "tmp-systest" ]
 }
 
-process_pids() { local process=$1
-  pgrep -f $process
-}
-
-check_ruby_processes_are_using_correct_ruby_version() { local process=$1; local ruby_version=$2
-  it "${process} processes should all use $ruby_version"
-    all=true
-    for p in $(process_pids $process); do
-      exe_ruby_version=$(ls -l /proc/$p/exe)
-      run echo $exe_ruby_version
-      all=$([[ $exe_ruby_version =~ $ruby_version ]] && $all && echo true || echo false)
-    done
-    assert test $all
+my_process_pids() { local process=$1
+  pgrep -u $USER $process
 }
 
 
@@ -55,7 +44,20 @@ check_unicorn() {
   describe 'unicorn'
     its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=2}
     its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=8}
-    check_ruby_processes_are_using_correct_ruby_version unicorn ${RUBY_VERSION:-ruby-2.0.0-p195}
+  end_describe
+}
+
+check_ruby_version() {
+  describe 'ruby_version'
+    local ruby_version=${RUBY_VERSION:-ruby-2.0.0-p195}
+    it "all ruby processes should use $ruby_version"
+      all=true
+      for p in $(my_process_pids ruby); do
+        exe_ruby_version=$(ls -l /proc/$p/exe)
+        run echo $exe_ruby_version
+        all=$([[ $exe_ruby_version =~ $ruby_version ]] && $all && echo true || echo false)
+      done
+      assert test $all
   end_describe
 }
 
@@ -97,7 +99,7 @@ check_postfix() {
 }
 
 
-DEFAULT_TMP_CHECKS="god unicorn nginx redis resque postfix"
+DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx redis resque postfix"
 check_tmp() {
   for c in $@; do
     func="check_${c}"
