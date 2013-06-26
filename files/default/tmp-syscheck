@@ -2,13 +2,14 @@
 
 check_system
 
-failed_email_blacklist="@ssdf.com|siege@locomote.com.au|authoriserdave@locomote.com.au|molly14@locomote.com.au|test@locomote.com.au|david-austravel@locomote.com.au"
+failed_email_blacklist="@ssdf.com"
 
 check_failed_emails() {
   MAIL_LOGFILE=${MAIL_LOGFILE:-/var/log/maillog}
   local emails_sent=$(sudo grep status=sent $MAIL_LOGFILE | sed 's/.* to=<//g' | sed 's/>,.*//g' | sort -u)
   local emails_failed=$(
     sudo grep status= $MAIL_LOGFILE |
+    grep -v "The email account that you tried to reach does not exist" |
     grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' |
     grep -v root | grep -v localhost | grep -v locomotetmp |
     grep -v -E $failed_email_blacklist
