@@ -91,7 +91,7 @@ check_redis() {
 
 check_resque() {
   describe 'resque'
-    its_process_count 'resque' ${RESQUE_PROCESS_COUNT:=2}
+    its_process_count 'resque' ${RESQUE_PROCESS_COUNT:=4}
   end_describe
 }
 
