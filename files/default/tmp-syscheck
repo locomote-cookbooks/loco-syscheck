@@ -4,6 +4,8 @@ check_system
 
 failed_email_blacklist="@ssdf.com"
 
+PAT_NON_EXISTENT_USER="(The email account that you tried to reach does not exist|No such user)"
+
 # TODO - DRY up this function on next change!
 check_failed_emails() {
   MAIL_LOGFILE=${MAIL_LOGFILE:-/var/log/maillog}
@@ -14,14 +16,14 @@ check_failed_emails() {
   )
   local emails_failed=$(
     sudo grep status= $MAIL_LOGFILE |
-    grep -v "The email account that you tried to reach does not exist" |
+    egrep -v "$PAT_NON_EXISTENT_USER" |
     grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' |
     grep -v root | grep -v localhost | grep -v locomotetmp |
     grep -v -E $failed_email_blacklist
   )
   local emails_failed_non_existent=$(
     sudo grep status= $MAIL_LOGFILE |
-    grep "The email account that you tried to reach does not exist" |
+    egrep "$PAT_NON_EXISTENT_USER" |
     grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' |
     grep -v root | grep -v localhost | grep -v locomotetmp |
     grep -v -E $failed_email_blacklist
