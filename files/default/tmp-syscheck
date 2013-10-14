@@ -59,14 +59,14 @@ check_god() {
 
 check_unicorn() {
   describe 'unicorn'
-    its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=2}
-    its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=8}
+    its_process_count 'unicorn_rails master' ${UNICORN_MASTER_PROCESS_COUNT:=1}
+    its_process_count 'unicorn_rails worker' ${UNICORN_WORKER_PROCESS_COUNT:=4}
   end_describe
 }
 
 check_ruby_version() {
   describe 'ruby_version'
-    local ruby_version=${RUBY_VERSION:-ruby-2.0.0-p195}
+    local ruby_version=${RUBY_VERSION:-ruby-2.0.0-p247}
     it "all ruby processes should use $ruby_version"
       all=true
       for p in $(my_process_pids ruby); do
@@ -93,30 +93,11 @@ check_redis() {
 
 check_resque() {
   describe 'resque'
-    its_process_count 'resque' ${RESQUE_PROCESS_COUNT:=4}
+    its_process_count 'resque' ${RESQUE_PROCESS_COUNT:=2}
   end_describe
 }
 
-check_postfix() {
-  describe 'postfix'
-    its_process_count 'postfix/master' ${POSTFIX_PROCESS_COUNT:=1}
-
-    if not_on_systest; then
-      it "should have the correct hostname in the (chef generated) postfix config file"
-        myhostname=`grep ^myhostname /etc/postfix/main.cf | sed 's/^myhostname = //'`
-        fqdn=`hostname --fqdn`
-        run echo "=> myhostname: $myhostname (fqdn: $fqdn)"
-        assert equal $myhostname $fqdn
-
-      it 'should not have any failed emails'
-        check_failed_emails
-    fi
-
-  end_describe
-}
-
-
-DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx redis resque postfix"
+DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx redis resque"
 check_tmp() {
   for c in $@; do
     func="check_${c}"
