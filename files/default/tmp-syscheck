@@ -97,7 +97,8 @@ check_resque() {
   end_describe
 }
 
-DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx redis resque"
+DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx resque"
+[ $RAILS_ENV == "systest" ] && DEFAULT_TMP_CHECKS="$DEFAULT_TMP_CHECKS redis"
 check_tmp() {
   for c in $@; do
     func="check_${c}"
