@@ -66,7 +66,7 @@ check_unicorn() {
 
 check_ruby_version() {
   describe 'ruby_version'
-    local ruby_version=${RUBY_VERSION:-ruby-2.0.0-p247}
+    local ruby_version=${RUBY_VERSION:-ruby-2.0.0-p353}
     it "all ruby processes should use $ruby_version"
       all=true
       for p in $(my_process_pids ruby); do
