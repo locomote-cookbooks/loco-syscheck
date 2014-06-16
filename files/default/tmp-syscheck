@@ -59,7 +59,16 @@ check_resque() {
   end_describe
 }
 
-DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx resque"
+check_newrelic() {
+  describe 'newrelic'
+    its_process_count 'nrsysmond' ${NRSYSMOND_PROCESS_COUNT:=2}
+
+    it "last log entry shouldn't be an error"
+      assert blank "$(tail -n 1 /var/log/newrelic/nrsysmond.log | grep error)"
+  end_describe
+}
+
+DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx resque newrelic"
 [ $RAILS_ENV == "systest" ] && DEFAULT_TMP_CHECKS="$DEFAULT_TMP_CHECKS redis"
 check_tmp() {
   for c in $@; do
