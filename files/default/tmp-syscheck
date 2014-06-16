@@ -2,44 +2,6 @@
 
 check_system
 
-failed_email_blacklist="@ssdf.com"
-
-PAT_NON_EXISTENT_USER="(The email account that you tried to reach does not exist|No such user)"
-
-# TODO - DRY up this function on next change!
-check_failed_emails() {
-  MAIL_LOGFILE=${MAIL_LOGFILE:-/var/log/maillog}
-
-  local emails_sent=$(
-    sudo grep status=sent $MAIL_LOGFILE |
-    sed 's/.* to=<//g' | sed 's/>,.*//g'
-  )
-  local emails_failed=$(
-    sudo grep status= $MAIL_LOGFILE |
-    egrep -v "$PAT_NON_EXISTENT_USER" |
-    grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' |
-    grep -v root | grep -v localhost | grep -v locomotetmp |
-    grep -v -E $failed_email_blacklist
-  )
-  local emails_failed_non_existent=$(
-    sudo grep status= $MAIL_LOGFILE |
-    egrep "$PAT_NON_EXISTENT_USER" |
-    grep -v sent | sed 's/.* to=<//g' | sed 's/>,.*//g' |
-    grep -v root | grep -v localhost | grep -v locomotetmp |
-    grep -v -E $failed_email_blacklist
-  )
-
-  local number_of_sent_emails=$(        [  "$emails_sent"   ] && (echo "$emails_sent"   | wc -l | tr -d ' ') || echo 0)
-  local number_of_failed_emails=$(      [  "$emails_failed" ] && (echo "$emails_failed" | wc -l | tr -d ' ') || echo 0)
-  local number_of_failed_non_existent=$([  "$emails_failed_non_existent" ] && (echo "$emails_failed_non_existent" | wc -l | tr -d ' ') || echo 0)
-
-  run echo "$number_of_sent_emails email(s) sent to : $(            echo "$emails_sent"   | sort -u | xargs)"
-  run echo "$number_of_failed_emails email(s) failed to send to : $(echo "$emails_failed" | sort -u | xargs)"
-  run echo "$number_of_failed_non_existent email(s) failed to send to non existent users: $(echo "$emails_failed_non_existent" | sort -u | xargs)"
-
-  assert equal $number_of_failed_emails 0
-}
-
 not_on_systest() {
   [ $(hostname) != "tmp-systest" ]
 }
