@@ -70,8 +70,19 @@ check_newrelic() {
   end
 }
 
-DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx resque newrelic"
-[ $RAILS_ENV == "systest" ] && DEFAULT_TMP_CHECKS="$DEFAULT_TMP_CHECKS redis"
+check_whenever() {
+  if ( $CRONMASTER ); then
+    describe 'whenever'
+      it "should have created some crontab entries on the CRONMASTER node"
+        assert test '[ $(crontab -l | sed -n "/Begin Whenever/,/End Whenever/p" | wc -l) -gt 0 ]'
+      end
+    end
+  fi
+}
+
+
+DEFAULT_TMP_CHECKS="god unicorn ruby_version nginx resque newrelic whenever"
+[ "$RAILS_ENV" == "systest" ] && DEFAULT_TMP_CHECKS="$DEFAULT_TMP_CHECKS redis"
 check_tmp() {
   for c in $@; do
     func="check_${c}"
